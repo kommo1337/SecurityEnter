@@ -67,31 +67,35 @@ namespace SecurityEnter
             {
                 using (var context = new DBEntities())
                 {
-                    
                     var user = context.User.FirstOrDefault(u => u.Login == login);
 
                     if (user != null)
                     {
-                        
-                        byte[] hashBytes = user.PasswordHash;
-                        byte[] salt = new byte[16];
-                        Array.Copy(hashBytes, 0, salt, 0, 16);
+                        // Получаем соль и хеш пароля из базы данных
+                        byte[] salt = user.Salt;
+                        byte[] storedHash = user.PasswordHash;
 
-                        
-                        var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 100000, HashAlgorithmName.SHA256);
-                        byte[] hash = pbkdf2.GetBytes(20);
+                        string saltedPassword = "0x" + BitConverter.ToString(salt).Replace("-", "") + password;
 
-                        
-                        for (int i = 0; i < 20; i++)
+                        // Вычисляем хеш пароля
+                        SHA512 sha512 = SHA512.Create();
+                        byte[] bytes = Encoding.UTF8.GetBytes(saltedPassword);
+                        byte[] computedHash = sha512.ComputeHash(bytes);
+
+                        // Применяем Key Stretching
+                        //int stretchFactor = 5000;
+                        //for (int i = 0; i < stretchFactor; i++)
+                        //{
+                        //    computedHash = sha512.ComputeHash(computedHash);
+                        //}
+
+                        // Сравниваем хеши с использованием функции ConstantTimeComparison
+                        if (!ConstantTimeComparison(storedHash, computedHash))
                         {
-                            if (hashBytes[i + 16] != hash[i])
-                            {
-                                MessageBox.Show("Неверный пароль");
-                                return false;
-                            }
+                            MessageBox.Show("Неверный пароль");
+                            return false;
                         }
 
-                        
                         Osnova osnovaForm = new Osnova();
                         osnovaForm.Show();
 
@@ -110,6 +114,17 @@ namespace SecurityEnter
                 return false;
             }
         }
+
+        public static bool ConstantTimeComparison(byte[] a, byte[] b)
+        {
+            uint diff = (uint)a.Length ^ (uint)b.Length;
+            for (int i = 0; i < a.Length && i < b.Length; i++)
+            {
+                diff |= (uint)(a[i] ^ b[i]);
+            }
+            return diff == 0;
+        }
+
 
     }
 }

@@ -17,6 +17,7 @@ namespace SecurityEnter
         public int IdUser { get; set; }
         public string Login { get; set; }
         public byte[] PasswordHash { get; set; }
+        public byte[] Salt { get; set; }
         public string Info { get; set; }
     }
 }

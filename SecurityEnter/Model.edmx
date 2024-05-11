@@ -12,13 +12,13 @@
           <Property Name="IdUser" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="Login" Type="nvarchar" MaxLength="40" Nullable="false" />
           <Property Name="PasswordHash" Type="binary" MaxLength="64" Nullable="false" />
+          <Property Name="Salt" Type="binary" MaxLength="16" Nullable="false" />
           <Property Name="Info" Type="nvarchar" MaxLength="40" />
         </EntityType>
         <Function Name="uspAddUser" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="pLogin" Type="nvarchar" Mode="In" />
           <Parameter Name="pPassword" Type="nvarchar" Mode="In" />
-          <Parameter Name="pI" Type="nvarchar" Mode="In" />
-          <Parameter Name="responseMessage" Type="nvarchar" Mode="InOut" />
+          <Parameter Name="pAdditionalInfo" Type="nvarchar" Mode="In" />
         </Function>
         <EntityContainer Name="Хранилище DBModelContainer">
           <EntitySet Name="User" EntityType="Self.User" Schema="dbo" store:Type="Tables" />
@@ -35,6 +35,7 @@
           <Property Name="IdUser" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="Login" Type="String" MaxLength="40" FixedLength="false" Unicode="true" Nullable="false" />
           <Property Name="PasswordHash" Type="Binary" MaxLength="64" FixedLength="true" Nullable="false" />
+          <Property Name="Salt" Type="Binary" MaxLength="16" FixedLength="true" Nullable="false" />
           <Property Name="Info" Type="String" MaxLength="40" FixedLength="false" Unicode="true" />
         </EntityType>
         <EntityContainer Name="DBEntities" annotation:LazyLoadingEnabled="true">
@@ -42,8 +43,7 @@
           <FunctionImport Name="uspAddUser">
             <Parameter Name="pLogin" Mode="In" Type="String" />
             <Parameter Name="pPassword" Mode="In" Type="String" />
-            <Parameter Name="pI" Mode="In" Type="String" />
-            <Parameter Name="responseMessage" Mode="InOut" Type="String" />
+            <Parameter Name="pAdditionalInfo" Mode="In" Type="String" />
           </FunctionImport>
         </EntityContainer>
       </Schema>
@@ -58,6 +58,7 @@
                 <ScalarProperty Name="IdUser" ColumnName="IdUser" />
                 <ScalarProperty Name="Login" ColumnName="Login" />
                 <ScalarProperty Name="PasswordHash" ColumnName="PasswordHash" />
+                <ScalarProperty Name="Salt" ColumnName="Salt" />
                 <ScalarProperty Name="Info" ColumnName="Info" />
               </MappingFragment>
             </EntityTypeMapping>

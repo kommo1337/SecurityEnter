@@ -17,18 +17,6 @@ namespace SecurityEnter
     
     public partial class DBEntities : DbContext
     {
-
-        private static DBEntities context;
-
-        public static DBEntities GetContext()
-        {
-            if (context == null)
-            {
-                context = new DBEntities();
-            }
-            return context;
-        }
-
         public DBEntities()
             : base("name=DBEntities")
         {
@@ -41,7 +29,7 @@ namespace SecurityEnter
     
         public virtual DbSet<User> User { get; set; }
     
-        public virtual int uspAddUser(string pLogin, string pPassword, string pI, ObjectParameter responseMessage)
+        public virtual int uspAddUser(string pLogin, string pPassword, string pAdditionalInfo)
         {
             var pLoginParameter = pLogin != null ?
                 new ObjectParameter("pLogin", pLogin) :
@@ -51,11 +39,11 @@ namespace SecurityEnter
                 new ObjectParameter("pPassword", pPassword) :
                 new ObjectParameter("pPassword", typeof(string));
     
-            var pIParameter = pI != null ?
-                new ObjectParameter("pI", pI) :
-                new ObjectParameter("pI", typeof(string));
+            var pAdditionalInfoParameter = pAdditionalInfo != null ?
+                new ObjectParameter("pAdditionalInfo", pAdditionalInfo) :
+                new ObjectParameter("pAdditionalInfo", typeof(string));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("uspAddUser", pLoginParameter, pPasswordParameter, pIParameter, responseMessage);
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("uspAddUser", pLoginParameter, pPasswordParameter, pAdditionalInfoParameter);
         }
     }
 }

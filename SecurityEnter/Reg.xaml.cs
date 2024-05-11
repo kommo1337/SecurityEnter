@@ -43,26 +43,27 @@ namespace SecurityEnter
             {
                 using (var context = new DBEntities())
                 {
-                    
+
                     byte[] salt = new byte[16];
                     using (var rng = new RNGCryptoServiceProvider())
                     {
                         rng.GetBytes(salt);
                     }
-
+                     
                     
-                    var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 100000, HashAlgorithmName.SHA256);
-                    byte[] hash = pbkdf2.GetBytes(20);
+                    string saltedPassword = "0x" + BitConverter.ToString(salt).Replace("-", "") + password;
 
-                    // Сохраняем хеш и соль
-                    byte[] hashBytes = new byte[36];
-                    Array.Copy(salt, 0, hashBytes, 0, 16);
-                    Array.Copy(hash, 0, hashBytes, 16, 20);
+                   
+                    SHA512 sha512 = SHA512.Create();
+                    byte[] bytes = Encoding.UTF8.GetBytes(saltedPassword);
+                    byte[] hash = sha512.ComputeHash(bytes);
+
 
                     var user = new User
                     {
                         Login = login,
-                        PasswordHash = hashBytes, 
+                        PasswordHash = hash,
+                        Salt = salt,
                         Info = i
                     };
 
@@ -77,9 +78,6 @@ namespace SecurityEnter
                 MessageBox.Show(ex.Message);
             }
         }
-
-
-
 
     }
 }
