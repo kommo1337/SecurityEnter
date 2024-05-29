@@ -71,29 +71,47 @@ namespace SecurityEnter
 
                     if (user != null)
                     {
-                        // Получаем соль и хеш пароля из базы данных
+                        // Retrieve the salt, encrypted hash, key, and IV from the database
                         byte[] salt = user.Salt;
-                        byte[] storedHash = user.PasswordHash;
+                        byte[] storedEncryptedHash = user.PasswordHash;
+                        byte[] storedKey = user.KeyHash;
+                        byte[] storedIV = user.IV;
 
-                        string saltedPassword = "0x" + BitConverter.ToString(salt).Replace("-", "") + password;
-
-                        // Вычисляем хеш пароля
-                        SHA512 sha512 = SHA512.Create();
-                        byte[] bytes = Encoding.UTF8.GetBytes(saltedPassword);
-                        byte[] computedHash = sha512.ComputeHash(bytes);
-
-                        // Применяем Key Stretching
-                        //int stretchFactor = 5000;
-                        //for (int i = 0; i < stretchFactor; i++)
-                        //{
-                        //    computedHash = sha512.ComputeHash(computedHash);
-                        //}
-
-                        // Сравниваем хеши с использованием функции ConstantTimeComparison
-                        if (!ConstantTimeComparison(storedHash, computedHash))
+                        // Derive key and IV from the password using PBKDF2
+                        using (var rfc2898 = new Rfc2898DeriveBytes(password, salt, 10000))
                         {
-                            MessageBox.Show("Неверный пароль");
-                            return false;
+                            byte[] aesKey = rfc2898.GetBytes(32); // 256-bit key
+                            byte[] aesIV = rfc2898.GetBytes(16); // 128-bit IV
+
+                            if (!ConstantTimeComparison(aesKey, storedKey) || !ConstantTimeComparison(aesIV, storedIV))
+                            {
+                                MessageBox.Show("Неверный пароль");
+                                return false;
+                            }
+
+                            // Hash the password
+                            SHA256 sha256 = SHA256.Create();
+                            byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+                            byte[] computedHash = sha256.ComputeHash(passwordBytes);
+
+                            // Decrypt the stored password hash
+                            using (AesManaged aes = new AesManaged())
+                            {
+                                aes.KeySize = 256;
+                                aes.BlockSize = 128;
+                                aes.Key = aesKey;
+                                aes.IV = aesIV;
+
+                                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+                                byte[] decryptedHash = decryptor.TransformFinalBlock(storedEncryptedHash, 0, storedEncryptedHash.Length);
+
+                                // Compare hashes using constant-time comparison
+                                if (!ConstantTimeComparison(decryptedHash, computedHash))
+                                {
+                                    MessageBox.Show("Неверный пароль");
+                                    return false;
+                                }
+                            }
                         }
 
                         Osnova osnovaForm = new Osnova();
@@ -115,6 +133,7 @@ namespace SecurityEnter
             }
         }
 
+     
         public static bool ConstantTimeComparison(byte[] a, byte[] b)
         {
             uint diff = (uint)a.Length ^ (uint)b.Length;

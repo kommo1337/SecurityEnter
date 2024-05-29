@@ -19,5 +19,7 @@ namespace SecurityEnter
         public byte[] PasswordHash { get; set; }
         public byte[] Salt { get; set; }
         public string Info { get; set; }
+        public byte[] KeyHash { get; set; }
+        public byte[] IV { get; set; }
     }
 }
